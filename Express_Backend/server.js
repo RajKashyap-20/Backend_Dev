@@ -6,6 +6,23 @@ app.use(express.json());
 
 const PORT = 8000;
 
+// Function to read students from file
+function readStudents(callback) {
+    fs.readFile("Student.json", "utf-8", (err, data) => {
+        if (err) {
+            callback(err, null);
+            return;
+        }
+        const students = JSON.parse(data || "[]");
+        callback(null, students);
+    });
+}
+
+// Function to write students to file
+function writeStudents(students, callback) {
+    fs.writeFile("./Student.json", JSON.stringify(students, null, 2), callback);
+}
+
 const Student = [
     { id: 2, name: "raj", branch: "cse" },
     { id: 4, name: "Kishan", branch: "ec" },
@@ -21,16 +38,17 @@ app.get("/", (req, res) => {
     return res.send("<h1>wellcome to home page</h1>")
 })
 
+app.get("/StudentA", (req, res) => {
+    res.json(Student);
+})
+
 app.get("/Student", (req, res) => {
-    // res.json(Student);
-
-    fs.readFile("./Student.json","utf-8",(err,data)=>{
-        if(err){
-            return res.status(500).send(err.message)
-
+    readStudents((err, students) => {
+        if (err) {
+            return res.status(500).send(err.message);
         }
-        return res.status(200).send(JSON.parse(data));
-    })
+        return res.status(200).send(students);
+    });
 })
 
 app.listen(PORT, () => {
@@ -83,47 +101,39 @@ app.post("/Student/register", (req, res)=>{
         return res.status(400).send("Invalid student data");
     }
 
-// read the file first
-fs.readFile("Student.json", "utf-8", (err, data) => {
-    if(err){
-        return res.status(500).send("could not read students file");
-    }
-    // parse existing data or start with an empty array
-    const students = JSON.parse(data || "[]");
-    console.log("<<<<<>>>>>",typeof students);
-
-     const newStudent = {
-        id: students.length > 0 ? students[students.length - 1].id + 1 : 1,
-        name,
-        branch,
-     };
-    students.push(newStudent);
-
-    //write the whole array back to the file (overwriting)
-    fs.writeFile("./Student.json", JSON.stringify(students, null, 2), (err) => {
+    // Read the file first using the function
+    readStudents((err, students) => {
         if(err){
-            return res.status(500).send("error writing to students file");
-            
+            return res.status(500).send("could not read students file");
         }
-        // only send response after successfully writing to the file
-        return res.status(201).json({message: "Student registered successfully", student: newStudent });
-        res.json(students);
+
+        const newStudent = {
+            id: students.length > 0 ? students[students.length - 1].id + 1 : 1,
+            name,
+            branch,
+        };
+        students.push(newStudent);
+
+        // Write the updated array back to the file using the function
+        writeStudents(students, (err) => {
+            if(err){
+                return res.status(500).send("error writing to students file");
+            }
+            // only send response after successfully writing to the file
+            return res.status(201).json({message: "Student registered successfully", student: newStudent });
+        });
     });
-});
 });
 
 
 app.put("/Student/:id/ID", (req, res) => {
     const userId = parseInt(req.params.id);
 
-    // Read the file first
-    fs.readFile("Student.json", "utf-8", (err, data) => {
+    // Read the file first using the function
+    readStudents((err, students) => {
         if (err) {
             return res.status(500).send("Could not read students file");
         }
-
-        // Parse existing data
-        const students = JSON.parse(data || "[]");
 
         const foundIndex = students.findIndex(s => s.id === userId);
 
@@ -134,8 +144,8 @@ app.put("/Student/:id/ID", (req, res) => {
         // Update the student data
         students[foundIndex] = { ...students[foundIndex], ...req.body };
 
-        // Write the updated array back to the file
-        fs.writeFile("./Student.json", JSON.stringify(students, null, 2), (err) => {
+        // Write the updated array back to the file using the function
+        writeStudents(students, (err) => {
             if (err) {
                 return res.status(500).send("Error writing to students file");
             }
@@ -152,14 +162,11 @@ app.put("/Student/:id/ID", (req, res) => {
 app.delete("/Student/:id/ID", (req, res) => {
     const userId = parseInt(req.params.id);
 
-    // Read the file first
-    fs.readFile("Student.json", "utf-8", (err, data) => {
+    // Read the file first using the function
+    readStudents((err, students) => {
         if (err) {
             return res.status(500).send("Could not read students file");
         }
-
-        // Parse existing data
-        const students = JSON.parse(data || "[]");
 
         const foundIndex = students.findIndex(s => s.id === userId);
 
@@ -170,8 +177,8 @@ app.delete("/Student/:id/ID", (req, res) => {
         // Remove the student from the array
         const deletedStudent = students.splice(foundIndex, 1)[0];
 
-        // Write the updated array back to the file
-        fs.writeFile("./Student.json", JSON.stringify(students, null, 2), (err) => {
+        // Write the updated array back to the file using the function
+        writeStudents(students, (err) => {
             if (err) {
                 return res.status(500).send("Error writing to students file");
             }
@@ -184,4 +191,3 @@ app.delete("/Student/:id/ID", (req, res) => {
         });
     });
 })
-
