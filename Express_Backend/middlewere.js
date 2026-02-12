@@ -1,10 +1,13 @@
-const express = require("express")
-const fs = require('fs');
-
+const fs = require("fs").promises;
+const express = require("express");
 const app = express();
-app.use(express.json());
 
-const PORT = 3000;
+app.use(express.json())
+
+const PORT= 8000;
+app.listen(PORT, () => {
+  console.log("Server is listening on port:8000");
+});
 app.use((req, res, next) => {
 console.log("I am middleware 1");
 loggerFiles(req);
@@ -31,10 +34,9 @@ console.log(err);
 next();
 });
 
-
 // Function to read students from file
 function readStudents(callback) {
-    fs.readFile("Student.json", "utf-8", (err, data) => {
+    fs.readFile("students.json", "utf-8", (err, data) => {
         if (err) {
             callback(err, null);
             return;
@@ -46,7 +48,7 @@ function readStudents(callback) {
 
 // Function to write students to file
 function writeStudents(students, callback) {
-    fs.writeFile("./Student.json", JSON.stringify(students, null, 2), callback);
+    fs.writeFile("./students.json", JSON.stringify(students, null, 2), callback);
 }
 
 const Student = [
@@ -59,8 +61,13 @@ const Student = [
 
 ];
 
+
 app.get("/", (req, res) => {
     return res.send("<h1>wellcome to home page</h1>")
+})
+
+app.get("/StudentA", (req, res) => {
+    res.json(Student);
 })
 
 app.get("/Student",suthMiddlewere, (req, res) => {
