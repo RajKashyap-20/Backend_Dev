@@ -7,13 +7,13 @@ app.set("view engine","ejs");
 app.use(express.urlencoded({extended:true}));
 
 const readStudentsFromFile = async () => {
-  const data = await fs.readFile("./students.json", "utf-8");
+  const data = await fs.readFile("views/Student.ejs", "utf-8");
   console.log(data)
   return JSON.parse(data || "[]");
 };
 
 const writeStudentsToFile = async (records) => {
-  await fs.writeFile("./students.json", JSON.stringify(records, null, 2));
+  await fs.writeFile("views/Student.ejs", JSON.stringify(records, null, 2));
 };
 
 app.get("/", async(req, res) => {
